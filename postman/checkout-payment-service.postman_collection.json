@@ -1,0 +1,186 @@
+{
+  "info": {
+    "_postman_id": "f1a05a39-5f15-4a66-9b55-bbfb30b343f2",
+    "name": "checkout-payment-service",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for the checkout-payment-service (Flask)."
+  },
+  "variable": [
+    {
+      "key": "paymentId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        {
+          "name": "POST /api/payments/intents (Create Payment Intent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Store paymentId for follow-up calls\n",
+                  "try {\n",
+                  "  const json = pm.response.json();\n",
+                  "  const paymentId = json?.payment?.id;\n",
+                  "  if (paymentId) {\n",
+                  "    pm.environment.set('paymentId', paymentId);\n",
+                  "    pm.collectionVariables.set('paymentId', paymentId);\n",
+                  "  }\n",
+                  "} catch (e) {}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"user-123\",\n  \"currency\": \"USD\",\n  \"items\": [\n    {\n      \"productId\": \"sku-001\",\n      \"name\": \"Vogue Tee\",\n      \"unitPrice\": 2599,\n      \"quantity\": 1\n    },\n    {\n      \"productId\": \"sku-002\",\n      \"name\": \"Vogue Hat\",\n      \"unitPrice\": 1599,\n      \"quantity\": 2\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "intents"
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/payments/{{paymentId}} (Get Payment)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/{{paymentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "{{paymentId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/payments/intents/{{paymentId}}/capture (Capture Payment)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "name": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text",
+                "description": "Required header. Use a UUID to prevent double-charging on retries."
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/intents/{{paymentId}}/capture",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "intents",
+                "{{paymentId}}",
+                "capture"
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/payments/intents/{{paymentId}}/capture (Replay Same Idempotency-Key)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "name": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Idempotency-Key",
+                "name": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text",
+                "description": "Set this env var to the same key you used previously to verify idempotency replay."
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/payments/intents/{{paymentId}}/capture",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "payments",
+                "intents",
+                "{{paymentId}}",
+                "capture"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

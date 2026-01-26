@@ -52,14 +52,18 @@ pipeline {
                 git(
                     branch: env.branchName,
                     credentialsId: "${env.GIT_CREDENTIALS}",
-                    url: 'https://github.com/vincentino1/catalog-service.git'
+                    url: 'https://github.com/vincentino1/payment-service.git'
                 )
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                    sh 'mvn clean install -DskipTests'
+                    sh '''
+                        python -m venv .venv
+                        . .venv/bin/activate
+                        pip install -r requirements.txt
+                    '''
             }
         }
     }

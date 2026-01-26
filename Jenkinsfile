@@ -16,12 +16,8 @@ properties([
 
 pipeline {
     agent any
-
-    tools {
-        maven 'maven 3.6' // Name must match the one you configured in Jenkins
-        jdk 'jdk21'
-    }
-        environment {
+    
+    environment {
         // credentials for git
         GIT_CREDENTIALS = 'Git_Credential'
     }

@@ -2,7 +2,7 @@ properties([
     pipelineTriggers([
         [
             $class: 'GenericTrigger',
-            token: 'MY_SPRING_TOKEN',
+            token: 'MY_PAYMENT_TOKEN',
             printContributedVariables: true,
             genericVariables: [
                 [key: 'ref',       value: '$.ref'],
@@ -19,7 +19,7 @@ pipeline {
 
     tools {
         maven 'maven 3.6' // Name must match the one you configured in Jenkins
-        jdk 'jdk17'
+        jdk 'jdk21'
     }
         environment {
         // credentials for git
@@ -60,7 +60,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                     sh '''
-                        python -m venv .venv
+                        python3 -m venv .venv
                         . .venv/bin/activate
                         pip install -r requirements.txt
                     '''

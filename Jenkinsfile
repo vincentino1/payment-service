@@ -15,11 +15,18 @@ properties([
 ])
 
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.11-slim'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+            reuseNode true
+        }
+    }
     
     environment {
         // credentials for git
         GIT_CREDENTIALS = 'Git_Credential'
+        VENV_DIR     = ".venv"
     }
     
     stages {
@@ -53,9 +60,24 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Set up Python Environment') {
             steps {
-                    sh 'pip install -r requirements.txt'                    
+                    sh '''
+                        python -m venv ${VENV_DIR}
+                        . ${VENV_DIR}/bin/activate
+                        pip install --upgrade pip
+                        pip install build
+                        pip install -r requirements.txt
+                    '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    . ${VENV_DIR}/bin/activate
+                    pytest
+                '''
             }
         }
     }

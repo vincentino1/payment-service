@@ -60,25 +60,25 @@ pipeline {
             }
         }
 
-        stage('Set up Python Environment') {
+        stage('Setup') { // Install any dependencies you need to perform testing
             steps {
-                    sh '''
-                        python -m venv ${VENV_DIR}
-                        . ${VENV_DIR}/bin/activate
-                        pip install --upgrade pip
-                        pip install build
-                        pip install -r requirements.txt
-                    '''
+                 script {
+                      sh '''
+                          pip install -r requirements.txt
+                          '''
+                    }
+              }
+        }
+        
+        stage('Linting') { // Run pylint against your code
+            steps {
+                script {
+                    sh """
+                        pylint **/*.py
+                    """
+                }
             }
         }
+    }   
 
-        stage('Run Tests') {
-            steps {
-                sh '''
-                    . ${VENV_DIR}/bin/activate
-                    pytest
-                '''
-            }
-        }
-    }
 }

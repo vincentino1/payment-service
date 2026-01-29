@@ -17,7 +17,7 @@ properties([
 pipeline {
     agent {
         docker {
-            image 'python:3.11'
+            image 'python:3.11:slim'
             args '-v /var/run/docker.sock:/var/run/docker.sock'
             reuseNode true
         }
@@ -60,23 +60,18 @@ pipeline {
             }
         }
 
-        stage('Setup') { // Install any dependencies you need to perform testing
+        stage('Set up Python') { // Install any dependencies you need to perform testing
             steps {
-                 script {
-                      sh '''
-                          pip install -r requirements.txt
-                          '''
-                    }
+                sh '''
+                    python3 -m venv ${VENV_DIR}'
+                    ./venv/bin/pip install -r requirements.txt         
+                    '''
               }
         }
         
-        stage('Linting') { // Run pylint against your code
+        stage('Run Tests') { // Run pytest against your code
             steps {
-                script {
-                    sh """
-                        pylint **/*.py
-                    """
-                }
+                sh './venv/bin/pytest tests/'        
             }
         }
     }   

@@ -57,8 +57,10 @@ pipeline {
         stage('Set up Python') { // Install any dependencies you need to perform testing
             steps {
                 sh '''
-                    python3 -m venv venv
-                    ./venv/bin/pip install -r requirements.txt         
+                    python3 -m venv .venv
+                    source .venv/bin/activate
+                    ./venv/bin/pip install -r requirements.txt  
+                    
                     '''
               }
         }

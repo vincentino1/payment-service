@@ -16,7 +16,7 @@ properties([
 
 pipeline {
     
-    agent any
+    agent { docker 'python:3.11-slim' }
         
     environment {
         // credentials for git

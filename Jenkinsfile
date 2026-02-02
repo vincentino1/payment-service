@@ -16,7 +16,12 @@ properties([
 
 pipeline {
     
-    agent { docker 'python:3.11-slim' }
+    agent { 
+        docker {
+            image 'python:3.11-slim'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'
+        }  
+    }
         
     environment {
         // credentials for git

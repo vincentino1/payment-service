@@ -81,11 +81,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                     script {
-
-                        def pkg = readJSON file: 'package.json'
-                        def appName = pkg.name
-
-                        env.IMAGE_NAME = "${REGISTRY_HOSTNAME}/${DOCKER_REPO}/${appName}:v${BUILD_NUMBER}"
+                        env.IMAGE_NAME = "${REGISTRY_HOSTNAME}/${DOCKER_REPO}/${APP_Name}:v${BUILD_NUMBER}"
 
                         docker.withRegistry("${REVERSE_PROXY_BASE_URL}", "${DOCKER_CREDENTIALS_ID}") {
                             docker.build(env.IMAGE_NAME)

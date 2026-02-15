@@ -1,6 +1,6 @@
 # Stage 1: Builder
 #=========================
-FROM python:3.11-slim AS builder
+FROM 16-52-79-103.sslip.io/myapp-docker-group/python:3.11-slim AS builder
 
 # Prevent bytecode & enable unbuffered logs
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -24,7 +24,7 @@ RUN pip install --upgrade pip \
 
 # Stage 2: Runtime
 # =========================
-FROM python:3.11-slim
+FROM 16-52-79-103.sslip.io/myapp-docker-group/python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

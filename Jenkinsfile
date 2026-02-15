@@ -24,6 +24,7 @@ pipeline {
 
         // Nexus PyPI
         NEXUS_PYPI_URL  = "http://10-2-10-63.sslip.io/repository/myapp-pypi-group/simple"
+        NEXUS_PYPI_HOSTED = "http://10-2-10-63.sslip.io/repository/myapp-pypi-hosted/"
         NEXUS_PYPI_HOST = "10-2-10-63.sslip.io"
         VENV            = ".venv"
 
@@ -87,6 +88,32 @@ pipeline {
                     . $VENV/bin/activate
                     pytest tests/
                 """
+            }
+        }
+
+        stage('Publish to PyPI Hosted') {
+            when {
+                expression { env.branchName == 'main' }
+            }
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'NEXUS_PYPI_CREDENTIALS',
+                    usernameVariable: 'NEXUS_USERNAME',
+                    passwordVariable: 'NEXUS_PASSWORD'
+                )]) {
+
+                    sh """
+                        . $VENV/bin/activate
+
+                        python -m build
+
+                        twine upload \
+                            --repository-url $NEXUS_PYPI_HOSTED \
+                            -u $NEXUS_USERNAME \
+                            -p $NEXUS_PASSWORD \
+                            dist/*
+                    """
+                }
             }
         }
 

@@ -77,6 +77,54 @@ pipeline {
                 """
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                    script {
+
+                        def pkg = readJSON file: 'package.json'
+                        def appName = pkg.name
+
+                        env.IMAGE_NAME = "${REGISTRY_HOSTNAME}/${DOCKER_REPO}/${appName}:v${BUILD_NUMBER}"
+
+                        docker.withRegistry("${REVERSE_PROXY_BASE_URL}", "${DOCKER_CREDENTIALS_ID}") {
+                            docker.build(env.IMAGE_NAME)
+                        }
+
+                        echo "Built image: ${env.IMAGE_NAME}"
+            }
+        }
+
+        stage('Push Docker Image to Nexus') {
+            when { 
+                expression { return env.branchName == 'main'}
+            }
+            steps {
+                script {
+                    docker.withRegistry("${REVERSE_PROXY_BASE_URL}", "${DOCKER_CREDENTIALS_ID}") {
+                        docker.image(env.IMAGE_NAME).push()
+                    }
+
+                    echo "Pushed Docker image: ${env.IMAGE_NAME}"
+
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            sh 'docker rmi ${IMAGE_NAME} || true'  // Cleanup
+        }
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'The pipeline encountered an error and did not complete successfully.'
+        }
+    }
+    
+    
     }   
 
 }

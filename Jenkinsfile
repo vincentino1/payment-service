@@ -9,23 +9,34 @@ properties([
                 [key: 'repo_name', value: '$.repository.name']
             ],
             regexpFilterText: '$repo_name:$ref',
-            regexpFilterExpression: '^.+:refs/heads/.+$' // default to any repo_name and branch in the payload
+            regexpFilterExpression: '^.+:refs/heads/.+$'
         ]
     ])
 ])
 
 pipeline {
-    
-    agent any       
+
+    agent any
+
     environment {
-        // credentials for git
+        // Git credentials
         GIT_CREDENTIALS = 'Git_Credential'
 
-        NEXUS_PYPI_URL = "http://10-2-10-63.sslip.io/repository/myapp-pypi-group/simple" 
+        // Nexus PyPI
+        NEXUS_PYPI_URL  = "http://10-2-10-63.sslip.io/repository/myapp-pypi-group/simple"
         NEXUS_PYPI_HOST = "10-2-10-63.sslip.io"
-        VENV = ".venv"
+        VENV            = ".venv"
+
+        // Nexus Docker Registry
+        DOCKER_REPO            = 'myapp-docker-hosted'
+        REGISTRY_HOSTNAME      = '16-52-79-103.sslip.io'
+        REVERSE_PROXY_BASE_URL = 'https://16-52-79-103.sslip.io'
+        APP_NAME               = 'checkout-payment-service'
+
+        // Jenkins Docker Credentials
+        DOCKER_CREDENTIALS_ID = 'NEXUS_DOCKER_CREDENTIALS'
     }
-    
+
     stages {
 
         stage('Webhook Debug') {
@@ -37,18 +48,17 @@ pipeline {
 
         stage('Clean Workspace') {
             steps {
-                echo "Deleting workspace..."
-                cleanWs()   // or use deleteDir()
+                cleanWs()
             }
         }
-        
+
         stage('Checkout') {
             steps {
                 script {
-                    
                     env.branchName = env.ref.replace('refs/heads/', '')
-                    echo "Checking out branch: ${env.branchName}"   
+                    echo "Checking out branch: ${env.branchName}"
                 }
+
                 git(
                     branch: env.branchName,
                     credentialsId: "${env.GIT_CREDENTIALS}",
@@ -57,19 +67,21 @@ pipeline {
             }
         }
 
-        stage('Set up Python') { // Install any dependencies you need to perform testing
+        stage('Set up Python') {
             steps {
-                sh '''
-                    python3 -m venv .venv
+                sh """
+                    python3 -m venv $VENV
                     . $VENV/bin/activate
-                    --index-url $NEXUS_PYPI_URL \
-                    --trusted-host $NEXUS_PYPI_HOST \
-                    -r requirements.txt      
-                    '''
-              }
+
+                    pip install \
+                        --index-url $NEXUS_PYPI_URL \
+                        --trusted-host $NEXUS_PYPI_HOST \
+                        -r requirements.txt
+                """
+            }
         }
-        
-        stage('Run Tests') { // Run pytest against your code
+
+        stage('Run Tests') {
             steps {
                 sh """
                     . $VENV/bin/activate
@@ -80,20 +92,21 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                    script {
-                        env.IMAGE_NAME = "${REGISTRY_HOSTNAME}/${DOCKER_REPO}/${APP_Name}:v${BUILD_NUMBER}"
+                script {
+                    env.IMAGE_NAME = "${REGISTRY_HOSTNAME}/${DOCKER_REPO}/${APP_NAME}:v${BUILD_NUMBER}"
 
-                        docker.withRegistry("${REVERSE_PROXY_BASE_URL}", "${DOCKER_CREDENTIALS_ID}") {
-                            docker.build(env.IMAGE_NAME)
-                        }
+                    docker.withRegistry("${REVERSE_PROXY_BASE_URL}", "${DOCKER_CREDENTIALS_ID}") {
+                        docker.build(env.IMAGE_NAME)
+                    }
 
-                        echo "Built image: ${env.IMAGE_NAME}"
+                    echo "Built image: ${env.IMAGE_NAME}"
+                }
             }
         }
 
         stage('Push Docker Image to Nexus') {
-            when { 
-                expression { return env.branchName == 'main'}
+            when {
+                expression { env.branchName == 'main' }
             }
             steps {
                 script {
@@ -102,7 +115,6 @@ pipeline {
                     }
 
                     echo "Pushed Docker image: ${env.IMAGE_NAME}"
-
                 }
             }
         }
@@ -110,17 +122,13 @@ pipeline {
 
     post {
         always {
-            sh 'docker rmi ${IMAGE_NAME} || true'  // Cleanup
+            sh 'docker rmi ${IMAGE_NAME} || true'
         }
         success {
             echo 'Pipeline completed successfully.'
         }
         failure {
-            echo 'The pipeline encountered an error and did not complete successfully.'
+            echo 'Pipeline failed.'
         }
     }
-    
-    
-    }   
-
 }

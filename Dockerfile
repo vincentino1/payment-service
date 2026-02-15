@@ -1,6 +1,10 @@
+# Private Nexus Docker registry
+ARG DOCKER_PRIVATE_REPO=16-52-79-103.sslip.io/myapp-docker-group
+
+#========================
 # Stage 1: Builder
 #=========================
-FROM 16-52-79-103.sslip.io/myapp-docker-group/python:3.11-slim AS builder
+FROM ${DOCKER_PRIVATE_REPO}/python:3.11-slim AS builder
 
 # Prevent bytecode & enable unbuffered logs
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -24,7 +28,7 @@ RUN pip install --upgrade pip \
 
 # Stage 2: Runtime
 # =========================
-FROM 16-52-79-103.sslip.io/myapp-docker-group/python:3.11-slim
+FROM ${DOCKER_PRIVATE_REPO}/python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

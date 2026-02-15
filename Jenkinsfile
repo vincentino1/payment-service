@@ -20,6 +20,10 @@ pipeline {
     environment {
         // credentials for git
         GIT_CREDENTIALS = 'Git_Credential'
+
+        NEXUS_PYPI_URL = "http://10-2-10-63.sslip.io/repository/myapp-pypi-group/simple" 
+        NEXUS_PYPI_HOST = "10-2-10-63.sslip.io"
+        VENV = ".venv"
     }
     
     stages {
@@ -57,16 +61,20 @@ pipeline {
             steps {
                 sh '''
                     python3 -m venv .venv
-                    source .venv/bin/activate
-                    pip install -r requirements.txt  
-                    
+                    . $VENV/bin/activate
+                    --index-url $NEXUS_PYPI_URL \
+                    --trusted-host $NEXUS_PYPI_HOST \
+                    -r requirements.txt      
                     '''
               }
         }
         
         stage('Run Tests') { // Run pytest against your code
             steps {
-                sh './venv/bin/pytest tests/'        
+                sh """
+                    . $VENV/bin/activate
+                    pytest tests/
+                """
             }
         }
     }   

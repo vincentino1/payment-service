@@ -1,6 +1,6 @@
 properties([
     pipelineTriggers([
-        [
+        [ 
             $class: 'GenericTrigger',
             token: 'MY_PAYMENT_TOKEN',
             printContributedVariables: true,

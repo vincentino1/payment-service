@@ -37,6 +37,9 @@ pipeline {
 
         // Jenkins Docker Credentials
         DOCKER_CREDENTIALS_ID  = 'docker-registry-creds'
+
+
+        NEXUS_PYPI_URL  = "http://$NEXUS_USER:$NEXUS_PASS@10.0.10.91:8081/repository/myapp-pypi-proxy/simple"
     }
 
     stages {

@@ -63,51 +63,6 @@ pipeline {
             }
         }
 
-        stage('Set up Python') {
-            steps {
-                script {
-                    sh """
-                        python3 -m venv ${VENV}
-                        . ${VENV}/bin/activate
-                        pip install --upgrade pip
-                        pip install -r requirements.txt
-                    """
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                sh """
-                    . ${VENV}/bin/activate
-                    pytest tests/
-                """
-            }
-        }
-
-stage('Publish to PyPI Hosted') {
-    when {
-        expression { env.branchName == 'main' }
-    }
-    steps {
-        withCredentials([usernamePassword(
-            credentialsId: env.NEXUS_PYPI_CREDENTIALS,
-            usernameVariable: 'NEXUS_USERNAME',
-            passwordVariable: 'NEXUS_PASSWORD'
-        )]) {
-            sh '''
-                . ${VENV}/bin/activate
-                python -m build
-                twine upload \
-                    --repository-url "${NEXUS_PYPI_HOSTED}" \
-                    -u "${NEXUS_USERNAME}" \
-                    -p "${NEXUS_PASSWORD}" \
-                    dist/*
-            '''
-        }
-    }
-}
-
         stage('Build Docker Image') {
             steps {
                 script {

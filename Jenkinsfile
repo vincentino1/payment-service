@@ -72,7 +72,7 @@ pipeline {
         stage('Set up Python') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'env.NEXUS_PYPI_CREDENTIALS', 
+                    credentialsId: env.NEXUS_PYPI_CREDENTIALS, 
                     usernameVariable: 'NEXUS_USER', 
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
@@ -102,7 +102,7 @@ pipeline {
             }
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'env.NEXUS_PYPI_CREDENTIALS',
+                    credentialsId: env.NEXUS_PYPI_CREDENTIALS,
                     usernameVariable: 'NEXUS_USERNAME',
                     passwordVariable: 'NEXUS_PASSWORD'
                 )]) {

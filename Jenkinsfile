@@ -23,15 +23,15 @@ pipeline {
         GIT_CREDENTIALS = 'Git_Credential'
 
         // Nexus PyPI
-        NEXUS_PYPI_URL  = "http://10-2-10-63.sslip.io/repository/myapp-pypi-group/simple"
-        NEXUS_PYPI_HOSTED = "http://10-2-10-63.sslip.io/repository/myapp-pypi-hosted/"
-        NEXUS_PYPI_HOST = "10-2-10-63.sslip.io"
+        NEXUS_PYPI_URL  = "http://3-98-125-121.sslip.io.sslip.io/repository/myapp-pypi-group/simple"
+        NEXUS_PYPI_HOSTED = "http://3-98-125-121.sslip.io.sslip.io/repository/myapp-pypi-hosted/"
+        NEXUS_PYPI_HOST = "3-98-125-121.sslip.io"
         VENV            = ".venv"
 
         // Nexus Docker Registry
         DOCKER_REPO            = 'myapp-docker-hosted'
-        REGISTRY_HOSTNAME      = '16-52-79-103.sslip.io'
-        REVERSE_PROXY_BASE_URL = 'https://16-52-79-103.sslip.io'
+        REGISTRY_HOSTNAME      = '3-98-125-121.sslip.io'
+        REVERSE_PROXY_BASE_URL = 'https://3-98-125-121.sslip.io'
         APP_NAME               = 'checkout-payment-service'
 
         // Jenkins Docker Credentials

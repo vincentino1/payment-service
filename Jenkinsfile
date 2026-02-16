@@ -20,7 +20,7 @@ pipeline {
 
     environment {
         // Git credentials
-        GIT_CREDENTIALS = 'Git_Credential'
+        GIT_CREDENTIALS = 'github-creds'
 
         // Nexus PyPI
         NEXUS_PYPI_URL  = "http://3-98-125-121.sslip.io.sslip.io/repository/myapp-pypi-group/simple"
@@ -35,7 +35,7 @@ pipeline {
         APP_NAME               = 'checkout-payment-service'
 
         // Jenkins Docker Credentials
-        DOCKER_CREDENTIALS_ID = 'NEXUS_DOCKER_CREDENTIALS'
+        DOCKER_CREDENTIALS_ID = 'docker-registry-creds'
     }
 
     stages {

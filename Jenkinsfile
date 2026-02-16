@@ -67,7 +67,9 @@ pipeline {
 
         stage('Set up Python') {
             steps {
-                script {
+                // Ensure Python3 venv exists on the agent
+                sh "python3 --version || true"
+
                 // Use credentials to access Nexus PyPI proxy
                 withCredentials([usernamePassword(
                     credentialsId: env.NEXUS_PYPI_CREDENTIALS,

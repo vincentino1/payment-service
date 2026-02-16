@@ -69,18 +69,12 @@ stage('Set up Python') {
     steps {
         script {
             // Use credentials to access Nexus PyPI group
-            withCredentials([usernamePassword(
-                credentialsId: env.NEXUS_PYPI_CREDENTIALS,
-                usernameVariable: 'NEXUS_USER',
-                passwordVariable: 'NEXUS_PASS'
-            )]) {
+    
                 sh """
                     python3 -m venv $VENV
                     . $VENV/bin/activate
                     pip install --upgrade pip
-                    pip install --index-url http://$NEXUS_USER:$NEXUS_PASS@10.0.10.91:8081/repository/myapp-pypi-group/simple \\
-                        --trusted-host 10.0.10.91 \\
-                        -r requirements.txt
+                    pip install -r requirements.txt
                 """
             }
         }

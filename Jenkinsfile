@@ -68,13 +68,6 @@ pipeline {
         stage('Set up Python') {
             steps {
                 script {
-                    // Install venv if not present
-                    sh '''
-                        sudo apt update
-                        sudo apt install -y python3-venv python3-pip
-                    '''
-                }
-
                 // Use credentials to access Nexus PyPI proxy
                 withCredentials([usernamePassword(
                     credentialsId: env.NEXUS_PYPI_CREDENTIALS,

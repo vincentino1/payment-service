@@ -28,6 +28,8 @@ pipeline {
         NEXUS_PYPI_HOST = "10.0.10.91"
         VENV            = ".venv"
 
+        NEXUS_PYPI_CREDENTIALS = 'nexus-creds'
+
         // Nexus Docker Registry
         DOCKER_REPO            = 'myapp-docker-hosted'
         REGISTRY_HOSTNAME      = '3-98-125-121.sslip.io'
@@ -70,16 +72,18 @@ pipeline {
 
         stage('Set up Python') {
             steps {
-                sh """
-                    python3 -m venv $VENV
-                    . $VENV/bin/activate
 
-                    pip install \
-                        --index-url $NEXUS_PYPI_URL \
-                        --trusted-host $NEXUS_PYPI_HOST \
+                withCredentials([usernamePassword(credentialsId: 'NEXUS_PYPI_CREDENTIALS', 
+                                  usernameVariable: 'NEXUS_USER', 
+                                  passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                        . $VENV/bin/activate
+                        pip install --upgrade pip
+                        pip install --index-url http://$NEXUS_USER:$NEXUS_PASS@10.0.10.91:8081/repository/myapp-pypi-group/simple \
+                        --trusted-host 10.0.10.91 \
                         -r requirements.txt
-                """
-            }
+                    """
+                }
         }
 
         stage('Run Tests') {

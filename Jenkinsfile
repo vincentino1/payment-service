@@ -22,10 +22,10 @@ pipeline {
         // Git credentials
         GIT_CREDENTIALS = 'github-creds'
 
-        // Nexus PyPI
-        NEXUS_PYPI_URL  = "http://3-98-125-121.sslip.io.sslip.io/repository/myapp-pypi-group/simple"
-        NEXUS_PYPI_HOSTED = "http://3-98-125-121.sslip.io.sslip.io/repository/myapp-pypi-hosted/"
-        NEXUS_PYPI_HOST = "3-98-125-121.sslip.io"
+        // Nexus PyPI http://10.0.10.91:8081
+        NEXUS_PYPI_URL  = "http://10.0.10.91:8081/repository/myapp-pypi-group/simple"
+        NEXUS_PYPI_HOSTED = "http://10.0.10.91:8081/repository/myapp-pypi-hosted/"
+        NEXUS_PYPI_HOST = "10.0.10.91"
         VENV            = ".venv"
 
         // Nexus Docker Registry

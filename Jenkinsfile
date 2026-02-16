@@ -1,6 +1,6 @@
 properties([
     pipelineTriggers([
-        [ 
+        [
             $class: 'GenericTrigger',
             token: 'MY_PAYMENT_TOKEN',
             printContributedVariables: true,
@@ -22,12 +22,11 @@ pipeline {
         // Git credentials
         GIT_CREDENTIALS = 'github-creds'
 
-        // Nexus PyPI http://10.0.10.91:8081
-        NEXUS_PYPI_URL  = "http://10.0.10.91:8081/repository/myapp-pypi-group/simple"
-        NEXUS_PYPI_HOSTED = "http://10.0.10.91:8081/repository/myapp-pypi-hosted/"
-        NEXUS_PYPI_HOST = "10.0.10.91"
-        VENV            = ".venv"
-
+        // Nexus PyPI
+        NEXUS_PYPI_URL        = "http://10.0.10.91:8081/repository/myapp-pypi-group/simple"
+        NEXUS_PYPI_HOSTED     = "http://10.0.10.91:8081/repository/myapp-pypi-hosted/"
+        NEXUS_PYPI_HOST       = "10.0.10.91"
+        VENV                  = ".venv"
         NEXUS_PYPI_CREDENTIALS = 'nexus-creds'
 
         // Nexus Docker Registry
@@ -37,7 +36,7 @@ pipeline {
         APP_NAME               = 'checkout-payment-service'
 
         // Jenkins Docker Credentials
-        DOCKER_CREDENTIALS_ID = 'docker-registry-creds'
+        DOCKER_CREDENTIALS_ID  = 'docker-registry-creds'
     }
 
     stages {
@@ -64,7 +63,7 @@ pipeline {
 
                 git(
                     branch: env.branchName,
-                    credentialsId: "${env.GIT_CREDENTIALS}",
+                    credentialsId: env.GIT_CREDENTIALS,
                     url: 'https://github.com/vincentino1/payment-service.git'
                 )
             }
@@ -72,18 +71,20 @@ pipeline {
 
         stage('Set up Python') {
             steps {
-
-                withCredentials([usernamePassword(credentialsId: 'NEXUS_PYPI_CREDENTIALS', 
-                                  usernameVariable: 'NEXUS_USER', 
-                                  passwordVariable: 'NEXUS_PASS')]) {
+                withCredentials([usernamePassword(
+                    credentialsId: 'NEXUS_PYPI_CREDENTIALS', 
+                    usernameVariable: 'NEXUS_USER', 
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
                     sh """
                         . $VENV/bin/activate
                         pip install --upgrade pip
-                        pip install --index-url http://$NEXUS_USER:$NEXUS_PASS@10.0.10.91:8081/repository/myapp-pypi-group/simple \
-                        --trusted-host 10.0.10.91 \
-                        -r requirements.txt
+                        pip install --index-url http://$NEXUS_USER:$NEXUS_PASS@10.0.10.91:8081/repository/myapp-pypi-group/simple \\
+                            --trusted-host 10.0.10.91 \\
+                            -r requirements.txt
                     """
                 }
+            }
         }
 
         stage('Run Tests') {
@@ -105,16 +106,13 @@ pipeline {
                     usernameVariable: 'NEXUS_USERNAME',
                     passwordVariable: 'NEXUS_PASSWORD'
                 )]) {
-
                     sh """
                         . $VENV/bin/activate
-
                         python -m build
-
-                        twine upload \
-                            --repository-url $NEXUS_PYPI_HOSTED \
-                            -u $NEXUS_USERNAME \
-                            -p $NEXUS_PASSWORD \
+                        twine upload \\
+                            --repository-url $NEXUS_PYPI_HOSTED \\
+                            -u $NEXUS_USERNAME \\
+                            -p $NEXUS_PASSWORD \\
                             dist/*
                     """
                 }
@@ -126,7 +124,7 @@ pipeline {
                 script {
                     env.IMAGE_NAME = "${REGISTRY_HOSTNAME}/${DOCKER_REPO}/${APP_NAME}:v${BUILD_NUMBER}"
 
-                    docker.withRegistry("${REVERSE_PROXY_BASE_URL}", "${DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry(REVERSE_PROXY_BASE_URL, DOCKER_CREDENTIALS_ID) {
                         docker.build(env.IMAGE_NAME)
                     }
 
@@ -141,7 +139,7 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry("${REVERSE_PROXY_BASE_URL}", "${DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry(REVERSE_PROXY_BASE_URL, DOCKER_CREDENTIALS_ID) {
                         docker.image(env.IMAGE_NAME).push()
                     }
 

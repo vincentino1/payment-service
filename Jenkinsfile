@@ -77,10 +77,11 @@ pipeline {
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
                     sh """
+                        python3 -m venv $VENV
                         . $VENV/bin/activate
                         pip install --upgrade pip
-                        pip install --index-url http://$NEXUS_USER:$NEXUS_PASS@10.0.10.91:8081/repository/myapp-pypi-group/simple \\
-                            --trusted-host 10.0.10.91 \\
+                        pip install --index-url "http://$NEXUS_USER:$NEXUS_PASS@10.0.10.91:8081/repository/myapp-pypi-group/simple" \
+                            --trusted-host 10.0.10.91 \
                             -r requirements.txt
                     """
                 }
@@ -109,10 +110,10 @@ pipeline {
                     sh """
                         . $VENV/bin/activate
                         python -m build
-                        twine upload \\
-                            --repository-url $NEXUS_PYPI_HOSTED \\
-                            -u $NEXUS_USERNAME \\
-                            -p $NEXUS_PASSWORD \\
+                        twine upload \
+                            --repository-url $NEXUS_PYPI_HOSTED \
+                            -u $NEXUS_USERNAME \
+                            -p $NEXUS_PASSWORD \
                             dist/*
                     """
                 }
@@ -151,7 +152,11 @@ pipeline {
 
     post {
         always {
-            sh 'docker rmi ${IMAGE_NAME} || true'
+            script {
+                if (env.IMAGE_NAME) {
+                    sh "docker rmi ${env.IMAGE_NAME} || true"
+                }
+            }
         }
         success {
             echo 'Pipeline completed successfully.'

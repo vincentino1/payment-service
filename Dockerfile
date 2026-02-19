@@ -1,5 +1,5 @@
 # Private Nexus Docker registry 
-ARG DOCKER_PRIVATE_REPO=3-98-125-121.sslip.io/myapp-docker-group
+ARG DOCKER_PRIVATE_REPO
 
 #========================
 # Stage 1: Builder

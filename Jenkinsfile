@@ -20,13 +20,18 @@ pipeline {
     environment {
         // Git credentials
         GIT_CREDENTIALS = 'github-creds'
+        GIT_BRANCH_URL = 'https://github.com/vincentino1/payment-service.git'
 
         // Nexus Docker Registry
-        DOCKER_REPO = 'myapp-docker-hosted'
-        REGISTRY_HOSTNAME = '3-98-125-121.sslip.io'
-        REVERSE_PROXY_BASE_URL = 'https://3-98-125-121.sslip.io'
-        APP_NAME = 'checkout-payment-service'
+        DOCKER_REPO_PUSH = 'myapp-docker-hosted'
+        DOCKER_REPO_PULL = 'myapp-docker-group'
         DOCKER_CREDENTIALS_ID = 'docker-registry-creds'
+
+        APP_NAME = 'checkout-payment-service'
+
+        // NEXUS_URL & DOCKER_REGISTRY_URL are set as Jenkins environment variables
+
+        
 
         // Python virtual environment
         VENV = ".venv"
@@ -49,15 +54,18 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                script {
-                    env.branchName = env.ref.replace('refs/heads/', '')
-                    echo "Checking out branch: ${env.branchName}"
+               script {
+                        if (!env.ref) {
+                            error "Webhook did not send 'ref'. Cannot determine branch."
+                        }
+                        env.branchName = env.ref.replace('refs/heads/', '')
+                        echo "Checking out branch: ${env.branchName}"
                 }
 
                 git(
                     branch: env.branchName,
                     credentialsId: env.GIT_CREDENTIALS,
-                    url: 'https://github.com/vincentino1/payment-service.git'
+                    url: env.GIT_BRANCH_URL
                 )
             }
         }
@@ -65,11 +73,9 @@ pipeline {
         stage('Set up Python') {
             steps {
                 script {
-                    // Create virtual environment
-                    sh "python3 -m venv $VENV"
-
                     // Install dependencies
                     sh """
+                        python3 -m venv $VENV
                         . $VENV/bin/activate
                         pip install --upgrade pip
                         pip install -r requirements.txt
@@ -91,10 +97,10 @@ pipeline {
             steps {
                 script {
                     // Tag Docker image using BUILD_NUMBER only
-                    env.IMAGE_NAME = "${REGISTRY_HOSTNAME}/${DOCKER_REPO}/${APP_NAME}:v${BUILD_NUMBER}"
+                    env.IMAGE_NAME = "${env.DOCKER_REGISTRY_URL}/${env.DOCKER_REPO_PUSH}/${env.APP_NAME}:v${env.BUILD_NUMBER}"
 
-                    docker.withRegistry(REVERSE_PROXY_BASE_URL, DOCKER_CREDENTIALS_ID) {
-                        docker.build(env.IMAGE_NAME)
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY_URL}", "${env.DOCKER_CREDENTIALS_ID}") {
+                        docker.build(env.IMAGE_NAME, "--build-arg DOCKER_PRIVATE_REPO=${env.NEXUS_URL}/${env.DOCKER_REPO_PULL} .")
                     }
 
                     echo "Built Docker image: ${env.IMAGE_NAME}"
@@ -108,7 +114,7 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry(REVERSE_PROXY_BASE_URL, DOCKER_CREDENTIALS_ID) {
+                    docker.withRegistry("https://${env.DOCKER_REGISTRY_URL}", "${env.DOCKER_CREDENTIALS_ID}") {
                         docker.image(env.IMAGE_NAME).push()
                     }
                     echo "Pushed Docker image: ${env.IMAGE_NAME}"

@@ -77,8 +77,6 @@ pipeline {
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
                     sh '''
-                        sudo apt-get update
-                        sudo apt-get install -y python3.10-venv
                         python3 -m venv ${VENV}
                         . ${VENV}/bin/activate
                         pip install --upgrade pip

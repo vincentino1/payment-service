@@ -76,15 +76,15 @@ pipeline {
                     usernameVariable: 'NEXUS_USER',
                     passwordVariable: 'NEXUS_PASS'
                 )]) {
-                    sh """
-                        apt-get update
-                        apt-get install -y python3.10-venv
+                    sh '''
+                        sudo apt-get update
+                        sudo apt-get install -y python3.10-venv
                         python3 -m venv ${VENV}
                         . ${VENV}/bin/activate
                         pip install --upgrade pip
                         pip install -r requirements.txt \
                           --index-url https://${NEXUS_USER}:${NEXUS_PASS}@repo.vinny-dev.com/repository/myapp-pypi-group/simple
-                    """
+                    '''
                 }
             }
         }

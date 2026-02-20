@@ -30,6 +30,8 @@ pipeline {
         APP_NAME = 'checkout-payment-service'
 
         NEXUS_PYPI_CRED = 'nexus-pypi-credentials'
+        REGISTRY_DOMAIN = 'repo.vinny-dev.com'
+        PYPI_REPO_GROUP = 'myapp-pypi-group'
 
         // NEXUS_URL should be defined in Jenkins global env
         VENV = ".venv"
@@ -81,7 +83,7 @@ pipeline {
                         . ${VENV}/bin/activate
                         pip install --upgrade pip
                         pip install -r requirements.txt \
-                          --index-url https://${NEXUS_USER}:${NEXUS_PASS}@repo.vinny-dev.com/repository/myapp-pypi-group/simple
+                          --index-url https://${NEXUS_USER}:${NEXUS_PASS}@${REGISTRY_DOMAIN}/repository/${PYPI_REPO_GROUP}/simple
                     '''
                 }
             }

@@ -29,11 +29,13 @@ pipeline {
 
         APP_NAME = 'checkout-payment-service'
 
-        NEXUS_PYPI_CRED = 'nexus-pypi-credentials'
-        REGISTRY_DOMAIN = 'repo.vinny-dev.com'
-        PYPI_REPO_GROUP = 'myapp-pypi-group'
+        // Nexus PyPI
+        NEXUS_PYPI_CRED  = 'nexus-pypi-credentials'
+        REGISTRY_DOMAIN  = 'repo.vinny-dev.com'
+        PYPI_REPO_GROUP  = 'myapp-pypi-group'
+        PYPI_REPO_HOSTED = 'myapp-pypi-hosted'
 
-        // NEXUS_URL should be defined in Jenkins global env
+        // Python virtual environment
         VENV = ".venv"
     }
 
@@ -81,9 +83,9 @@ pipeline {
                     sh '''
                         python3 -m venv ${VENV}
                         . ${VENV}/bin/activate
-                        pip install --upgrade pip
-                        pip install -r requirements.txt \
-                          --index-url https://${NEXUS_USER}:${NEXUS_PASS}@${REGISTRY_DOMAIN}/repository/${PYPI_REPO_GROUP}/simple
+                        python3 -m pip install --upgrade pip
+                        python3 -m pip install -r requirements.txt \
+                            --index-url https://${NEXUS_USER}:${NEXUS_PASS}@${REGISTRY_DOMAIN}/repository/${PYPI_REPO_GROUP}/simple
                     '''
                 }
             }
@@ -95,6 +97,37 @@ pipeline {
                     . ${VENV}/bin/activate
                     pytest tests/
                 """
+            }
+        }
+
+        stage('Build & Upload to PyPI Nexus Registry') {
+            when { expression { env.branchName == 'main' } }
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: env.NEXUS_PYPI_CRED,
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    sh """
+                        set -e
+                        . ${VENV}/bin/activate
+
+                        # Upgrade packaging tools
+                        python3 -m pip install --upgrade pip wheel build twine
+
+                        # Clean previous build artifacts
+                        rm -rf dist/
+
+                        # Build source and wheel distributions
+                        python3 -m build --sdist --wheel .
+
+                        # Upload to Nexus hosted PyPI repository
+                        python3 -m twine upload \
+                            --repository-url https://${NEXUS_USER}:${NEXUS_PASS}@${REGISTRY_DOMAIN}/repository/${PYPI_REPO_HOSTED}/ \
+                            dist/* \
+                            --skip-existing
+                    """
+                }
             }
         }
 
@@ -119,9 +152,7 @@ pipeline {
         }
 
         stage('Push Docker Image to Nexus') {
-            when {
-                expression { env.branchName == 'main' }
-            }
+            when { expression { env.branchName == 'main' } }
             steps {
                 script {
                     docker.withRegistry(
@@ -155,9 +186,6 @@ pipeline {
         }
     }
 }
-
-
-
 
 
 // properties([

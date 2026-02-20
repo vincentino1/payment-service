@@ -18,22 +18,20 @@ pipeline {
     agent any
 
     environment {
-        // Git credentials
+        // Git
         GIT_CREDENTIALS = 'github-creds'
-        GIT_BRANCH_URL = 'https://github.com/vincentino1/payment-service.git'
+        GIT_BRANCH_URL  = 'https://github.com/vincentino1/payment-service.git'
 
         // Nexus Docker Registry
-        DOCKER_REPO_PUSH = 'myapp-docker-hosted'
-        DOCKER_REPO_PULL = 'myapp-docker-group'
+        DOCKER_REPO_PUSH      = 'myapp-docker-hosted'
+        DOCKER_REPO_PULL      = 'myapp-docker-group'
         DOCKER_CREDENTIALS_ID = 'docker-registry-creds'
 
         APP_NAME = 'checkout-payment-service'
 
-        // NEXUS_URL is set as Jenkins environment variables
+        NEXUS_PYPI_CRED = 'nexus-pypi-credentials'
 
-        
-
-        // Python virtual environment
+        // NEXUS_URL should be defined in Jenkins global env
         VENV = ".venv"
     }
 
@@ -54,12 +52,13 @@ pipeline {
 
         stage('Checkout') {
             steps {
-               script {
-                        if (!env.ref) {
-                            error "Webhook did not send 'ref'. Cannot determine branch."
-                        }
-                        env.branchName = env.ref.replace('refs/heads/', '')
-                        echo "Checking out branch: ${env.branchName}"
+                script {
+                    if (!env.ref) {
+                        error "Webhook did not send 'ref'. Cannot determine branch."
+                    }
+
+                    env.branchName = env.ref.replace('refs/heads/', '')
+                    echo "Checking out branch: ${env.branchName}"
                 }
 
                 git(
@@ -72,20 +71,19 @@ pipeline {
 
         stage('Set up Python') {
             steps {
-                steps {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'nexus-pypi-credentials',
-                        usernameVariable: 'NEXUS_USER',
-                        passwordVariable: 'NEXUS_PASS'
-                    )]) {
-                        sh """
-                            apt-get update
-                            apt-get install -y python3.10-venv
-                            python3 -m venv $VENV
-                            . $VENV/bin/activate
-                            pip install --upgrade pip
-                            pip install -r requirements.txt \
-                               --index-url https://$NEXUS_USER:$NEXUS_PASS@repo.vinny-dev.com/repository/myapp-pypi-group/simple         
+                withCredentials([usernamePassword(
+                    credentialsId: env.NEXUS_PYPI_CRED,
+                    usernameVariable: 'NEXUS_USER',
+                    passwordVariable: 'NEXUS_PASS'
+                )]) {
+                    sh """
+                        apt-get update
+                        apt-get install -y python3.10-venv
+                        python3 -m venv ${VENV}
+                        . ${VENV}/bin/activate
+                        pip install --upgrade pip
+                        pip install -r requirements.txt \
+                          --index-url https://${NEXUS_USER}:${NEXUS_PASS}@repo.vinny-dev.com/repository/myapp-pypi-group/simple
                     """
                 }
             }
@@ -94,7 +92,7 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh """
-                    . $VENV/bin/activate
+                    . ${VENV}/bin/activate
                     pytest tests/
                 """
             }
@@ -103,11 +101,16 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Tag Docker image using BUILD_NUMBER only
                     env.IMAGE_NAME = "${env.NEXUS_URL}/${env.DOCKER_REPO_PUSH}/${env.APP_NAME}:v${env.BUILD_NUMBER}"
 
-                    docker.withRegistry("https://${env.NEXUS_URL}", "${env.DOCKER_CREDENTIALS_ID}") {
-                        docker.build(env.IMAGE_NAME, "--build-arg DOCKER_PRIVATE_REPO=${env.NEXUS_URL}/${env.DOCKER_REPO_PULL} .")
+                    docker.withRegistry(
+                        "https://${env.NEXUS_URL}",
+                        env.DOCKER_CREDENTIALS_ID
+                    ) {
+                        docker.build(
+                            env.IMAGE_NAME,
+                            "--build-arg DOCKER_PRIVATE_REPO=${env.NEXUS_URL}/${env.DOCKER_REPO_PULL} ."
+                        )
                     }
 
                     echo "Built Docker image: ${env.IMAGE_NAME}"
@@ -121,9 +124,13 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry("https://${env.NEXUS_URL}", "${env.DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry(
+                        "https://${env.NEXUS_URL}",
+                        env.DOCKER_CREDENTIALS_ID
+                    ) {
                         docker.image(env.IMAGE_NAME).push()
                     }
+
                     echo "Pushed Docker image: ${env.IMAGE_NAME}"
                 }
             }
@@ -138,14 +145,17 @@ pipeline {
                 }
             }
         }
+
         success {
             echo 'Pipeline completed successfully.'
         }
+
         failure {
             echo 'Pipeline failed.'
         }
     }
 }
+
 
 
 

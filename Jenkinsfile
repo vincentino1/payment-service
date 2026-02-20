@@ -29,7 +29,7 @@ pipeline {
 
         APP_NAME = 'checkout-payment-service'
 
-        // NEXUS_URL & DOCKER_REGISTRY_URL are set as Jenkins environment variables
+        // NEXUS_URL is set as Jenkins environment variables
 
         
 
@@ -97,9 +97,9 @@ pipeline {
             steps {
                 script {
                     // Tag Docker image using BUILD_NUMBER only
-                    env.IMAGE_NAME = "${env.DOCKER_REGISTRY_URL}/${env.DOCKER_REPO_PUSH}/${env.APP_NAME}:v${env.BUILD_NUMBER}"
+                    env.IMAGE_NAME = "${env.NEXUS_URL}/${env.DOCKER_REPO_PUSH}/${env.APP_NAME}:v${env.BUILD_NUMBER}"
 
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY_URL}", "${env.DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry("https://${env.NEXUS_URL}", "${env.DOCKER_CREDENTIALS_ID}") {
                         docker.build(env.IMAGE_NAME, "--build-arg DOCKER_PRIVATE_REPO=${env.NEXUS_URL}/${env.DOCKER_REPO_PULL} .")
                     }
 
@@ -114,7 +114,7 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry("https://${env.DOCKER_REGISTRY_URL}", "${env.DOCKER_CREDENTIALS_ID}") {
+                    docker.withRegistry("https://${env.NEXUS_URL}", "${env.DOCKER_CREDENTIALS_ID}") {
                         docker.image(env.IMAGE_NAME).push()
                     }
                     echo "Pushed Docker image: ${env.IMAGE_NAME}"

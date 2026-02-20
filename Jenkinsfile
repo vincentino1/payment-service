@@ -122,10 +122,7 @@ pipeline {
                         python3 -m build --sdist --wheel .
 
                         # Upload to Nexus hosted PyPI repository
-                        python3 -m twine upload \
-                            --repository-url https://${NEXUS_USER}:${NEXUS_PASS}@${REGISTRY_DOMAIN}/repository/${PYPI_REPO_HOSTED}/ \
-                            dist/* \
-                            --skip-existing
+                        python3 -m twine upload --repository-url https://${NEXUS_USER}:${NEXUS_PASS}@${REGISTRY_DOMAIN}/repository/${PYPI_REPO_HOSTED}/ dist/*
                     """
                 }
             }
